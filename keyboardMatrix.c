@@ -4,7 +4,7 @@
  *  Created on: Feb 10, 2015
  *      Author: John Convertino
  *      email: electrobs@gmail.com
- *		
+ *
  *		Library for matrix keyboard of any size and port.
  *
     Copyright (C) 2015 John Convertino
@@ -51,6 +51,11 @@ static s_matrix matrix;
 
 void initKeyboardMatrix(volatile uint8_t *row_port, uint8_t row_size, volatile uint8_t *col_port, uint8_t col_size)
 {
+  uint8_t tmpSREG = 0;
+
+  tmpSREG = SREG;
+  cli();
+
   matrix.row_size = row_size;
   matrix.row_index = 0;
   matrix.col_size = col_size;
@@ -63,17 +68,22 @@ void initKeyboardMatrix(volatile uint8_t *row_port, uint8_t row_size, volatile u
   //set row port bit 0 to 1
   *(matrix.row_port) &= (~0 << matrix.row_size);
   *(matrix.row_port) |= (1 << matrix.row_index);
+
+  SREG = tmpSREG;
 }
 
 void scanMatrix()
 {
-  uint8_t bufSREG = SREG;
+  uint8_t tmpSREG = 0;
+
+  tmpSREG = SREG;
   cli();
+
   static uint64_t pastMilliseconds = 0;
 
   if((e_milliseconds - pastMilliseconds) < WAIT_TIME)
   {
-      SREG = bufSREG;
+      SREG = tmpSREG;
       return;
   }
 
@@ -92,19 +102,24 @@ void scanMatrix()
   *(matrix.row_port) &= (~0U << matrix.row_size);
   *(matrix.row_port) |= (1 << matrix.row_index);
 
-  SREG = bufSREG;
+  SREG = tmpSREG;
 
 }
 
 uint8_t getKey()
 {
-  uint8_t bufSREG = SREG;
+  uint8_t tmpSREG = 0;
+
+  tmpSREG = SREG;
   cli();
+
   if(*(matrix.col_port) & (1 << matrix.col_index))
   {
-      SREG = bufSREG;
+      SREG = tmpSREG;
       return ((matrix.row_index + 1) * 10 + matrix.col_index);
   }
-  SREG = bufSREG;
+
+  SREG = tmpSREG;
+
   return 0;
 }
